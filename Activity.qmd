@@ -1,0 +1,82 @@
+---
+title: "Day 8 Activities"
+author: "Heather Childers"
+format: html
+editor: visual
+execute: 
+  warning: false
+---
+
+## Library
+
+```{r}
+library(tidyverse)
+library(here)
+library(janitor)
+library(patchwork)
+library(ggrepel)
+library(gghighlight)
+library(paletteer)
+library(ggExtra)
+library(ggbeeswarm)
+library(gapminder)
+library(sf)
+```
+
+## Bad Data Vis Techniques:
+
+```{r}
+space <- read_csv(here("data", "space_launches.csv"))
+
+space_data_bad <- space %>% 
+  group_by(launch_year) %>% 
+  mutate(launch_per_year = n())
+```
+
+```{r}
+ggplot(space_data_bad, aes(y = launch_per_year))+
+  geom_bar(aes(color = mission))+
+  coord_polar(theta = "x", direction=1)+
+  theme(legend.position="none")+
+  geom_text(x = 0, aes(label = tag))
+  
+   
+```
+
+## Good Data Vis
+
+```{r}
+
+sf_ghg<- read_csv(here("data", "San_Francisco_Communitywide_Greenhouse_Gas_Inventory.csv"))
+
+```
+
+```{r}
+sf_data_1<- sf_ghg %>%
+  group_by(Sector_General) %>%
+  summarize(total_emissions = sum(Emissions_mtCO2e, na.rm = TRUE))
+
+sf_data_2<- sf_ghg %>%
+  group_by(Calendar_Year, Commodity_Type) %>%
+  summarize(total_emissions = sum(Emissions_mtCO2e, na.rm = TRUE))
+
+sf_data_3<- sf_ghg %>% 
+  filter(Calendar_Year %in% c(2005:2019), str_detect(Sector_Detail2, pattern = "PG&E")) %>% select("Calendar_Year", "Sector_Detail2", "Emissions_mtCO2e")
+```
+
+```{r}
+
+sf_data_plot<- sf_ghg %>%
+  group_by(Calendar_Year, Sector_General) %>%
+  summarize(total_emissions = sum(c(Emissions_mtCO2e,Biogenic_Emissions_mtCO2e), na.rm = TRUE))
+
+
+ggplot(sf_data_plot, aes(y = fct_reorder(Sector_General,total_emissions), x = total_emissions))+
+  geom_col()+
+  facet_wrap("Calendar_Year")+
+   labs(x = "Total Emissions of CO2 in megatonnes", y = "General Sector",
+ title ="Total Emissions of CO2 per year, by sector")
+  
+  
+  
+```
